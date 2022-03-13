@@ -1,6 +1,7 @@
 #include <argparse/argparse.hpp>
 #include <filesystem>
 #include <fstream>
+#include <vector>
 
 #include "common.h"
 #include "event_dat.h"
@@ -15,19 +16,13 @@ int main(int argc, char* argv[])
 
     // https://github.com/atom0s/XiEvents/blob/main/Event%20DAT%20Files.md
     // 241 Windurst Woods Zone Events
-    auto wwPath = std::filesystem::path(ffPath / "ROM/21/50.DAT");
-    auto dat    = load_file(wwPath.generic_string());
+    auto eventDat = eventdat_t(ffPath / "ROM/21/50.DAT");
 
-    uint32_t blockCount = *reinterpret_cast<uint32_t*>(dat.data());
-    spdlog::info("blockCount: {}", blockCount);
-
-    auto blockSizes = std::vector<uint32_t>(blockCount);
-    for (std::size_t idx = 0; idx < blockCount; ++idx)
+    spdlog::info("eventDat.Header.BlockCount: {}", eventDat.Header.BlockCount);
+    for (auto const& block : eventDat.Blocks)
     {
-        blockSizes[idx] = *reinterpret_cast<uint32_t*>(dat.data() + 1 + idx);
+        spdlog::info("block.ActorNumber: {:08X}", block.ActorNumber);
     }
-
-    spdlog::info("First ActorNumber: {}", *reinterpret_cast<uint32_t*>(dat.data() + 1 + blockCount));
 
     return 0;
 }

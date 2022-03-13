@@ -6,10 +6,9 @@
 #include "common.h"
 
 // https://stackoverflow.com/questions/51352863/what-is-the-idiomatic-c17-standard-approach-to-reading-binary-files
-std::vector<uint8_t> load_file(std::string const& filepath)
+template <typename T>
+std::vector<T> load_file(std::string const& filepath)
 {
-    spdlog::info("load_file: {}", filepath);
-
     std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
 
     if (!ifs)
@@ -27,14 +26,12 @@ std::vector<uint8_t> load_file(std::string const& filepath)
         return {};
     }
 
-    std::vector<uint8_t> buffer(size);
+    std::vector<T> buffer(size);
 
     if (!ifs.read((char*)buffer.data(), buffer.size()))
     {
         throw std::runtime_error(filepath + ": " + std::strerror(errno));
     }
-
-    spdlog::info("size: {}", buffer.size());
 
     return buffer;
 }
