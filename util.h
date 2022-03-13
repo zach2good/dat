@@ -1,9 +1,9 @@
 #pragma once
 
+#include "common.h"
+
 #include <fstream>
 #include <vector>
-
-#include "common.h"
 
 // https://stackoverflow.com/questions/51352863/what-is-the-idiomatic-c17-standard-approach-to-reading-binary-files
 template <typename T>

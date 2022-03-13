@@ -32,7 +32,7 @@ struct DATHEAD
     {
         // TODO: Why do I need to re-cast these to uint32_t?
         return fmt::format("id: {}, type: {}, next: {}, is_shadow: {}, is_extracted: {}, ver_num: {}, is_virtual: {}",
-            id, (uint32_t)type, (uint32_t)next, (uint32_t)is_shadow, (uint32_t)is_extracted, (uint32_t)ver_num, (uint32_t)is_virtual);
+                           id, (uint32_t)type, (uint32_t)next, (uint32_t)is_shadow, (uint32_t)is_extracted, (uint32_t)ver_num, (uint32_t)is_virtual);
     }
 };
 #pragma pack(pop)

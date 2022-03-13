@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "util.h"
+
 #include <filesystem>
 
 // https://github.com/atom0s/XiEvents/blob/main/Event%20DAT%20Structures.md
@@ -14,7 +15,7 @@ struct eventheader_t
 
 struct eventblock_t
 {
-    uint32_t              ActorNumber;   // Entity Server Id
+    uint32_t              ActorNumber;   // Entity Server Id (0x7FFFFFFF represents player/zone events not directly connected to any specific entity in the zone)
     uint32_t              TagCount;      // Event count.
     std::vector<uint16_t> TagOffset;     // Event offset table.
     std::vector<uint16_t> EvectExecNum;  // Event id table.
@@ -35,8 +36,7 @@ struct eventdat_t
 
         uint32_t offset = 0;
 
-        // Load Header
-        Header.BlockCount = *reinterpret_cast<uint32_t*>(data + offset); //
+        Header.BlockCount = *reinterpret_cast<uint32_t*>(data + offset);
         offset += 4;
 
         Header.BlockSizes = std::vector<uint32_t>(Header.BlockCount);

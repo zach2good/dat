@@ -1,11 +1,12 @@
+#include "common.h"
+#include "event_dat.h"
+#include "util.h"
+#include "xievent.h"
+
 #include <argparse/argparse.hpp>
 #include <filesystem>
 #include <fstream>
 #include <vector>
-
-#include "common.h"
-#include "event_dat.h"
-#include "util.h"
 
 int main(int argc, char* argv[])
 {
@@ -17,11 +18,11 @@ int main(int argc, char* argv[])
     // https://github.com/atom0s/XiEvents/blob/main/Event%20DAT%20Files.md
     // 241 Windurst Woods Zone Events
     auto eventDat = eventdat_t(ffPath / "ROM/21/50.DAT");
+    auto xiEvent  = xievent_t(eventDat);
 
-    spdlog::info("eventDat.Header.BlockCount: {}", eventDat.Header.BlockCount);
-    for (auto const& block : eventDat.Blocks)
+    while (!xiEvent.RetFlag)
     {
-        spdlog::info("block.ActorNumber: {:08X}", block.ActorNumber);
+        xiEvent.ExecProg();
     }
 
     return 0;
