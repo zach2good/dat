@@ -7,7 +7,9 @@
 
 struct dialogdat_t
 {
+    // Load a Dialog DAT file from a given path and store it in an intermediate representation
     dialogdat_t(std::filesystem::path path)
+    : path(path)
     {
         spdlog::info("Loading Dialog DAT: {}", path.generic_string());
 
@@ -25,7 +27,14 @@ struct dialogdat_t
             return;
         }
 
-        uint32_t startPos = data[1] ^ 0x80808080;
+        // Decrypt
+        // TODO: Is this size right?
+        for (std::size_t idx = 1; idx < dat.size() - 4; ++idx)
+        {
+            dat[idx] ^= 0x80808080;
+        }
+
+        uint32_t startPos = data[1];
         spdlog::info(fmt::format("startPos: {}", startPos));
         if (startPos % 4 != 0)
         {
@@ -40,10 +49,35 @@ struct dialogdat_t
 
         for (uint32_t idx = 1; idx < entryCount; ++idx)
         {
-            entries.emplace_back(data[idx] ^ 0x80808080);
+            entries.emplace_back(data[idx]);
         }
+
+        // Add end marker
         entries.emplace_back((uint32_t)dat.size() - 4);
 
         std::sort(entries.begin(), entries.end());
+
+        for (std::size_t idx = 0; idx < entries.size() - 1; ++idx)
+        {
+            auto start = entries[idx];
+            auto end   = entries[idx + 1];
+            auto len   = end - start;
+
+            spdlog::info(fmt::format("{} ({})", std::string(data + start, data + end), len));
+        }
     }
+
+    // TODO: Take the parsed intermediate representation and dump it as a DAT to the original filepath
+    void toDAT()
+    {
+    }
+
+    // TODO: Take the parsed intermediate representation and dump it as a JSON to the original filepath
+    void toJSON()
+    {
+    }
+
+    std::filesystem::path path;
+
+    // TODO: Store intermediate representation of dialogs, probably a map or something
 };

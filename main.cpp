@@ -11,6 +11,11 @@ using json = nlohmann::json;
 #include <string>
 #include <vector>
 
+enum ZONES
+{
+    WINDURST_WOODS = 241,
+};
+
 int main(int argc, char* argv[])
 {
     argparse::ArgumentParser program(argv[0]);
@@ -30,11 +35,13 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Windurst Woods
-    std::string name = data[241][1];
-    entitydat_t entities(data[241][2]);
+    auto entry = data[ZONES::WINDURST_WOODS];
+    std::string name = entry[1];
+    entitydat_t entities(entry[2]);
+    //entities.print();
+
     // eventdat_t  events(data[241][3]);
-    // dialogdat_t dialogs(data[241][4]);
+    dialogdat_t dialogs(entry[4]);
 
     return 0;
 }

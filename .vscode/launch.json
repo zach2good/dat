@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "(Windows) dat.exe",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/dat.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "logging": {
+                "moduleLoad": false,
+                "exceptions": false,
+            },
+        },
+    ]
+}

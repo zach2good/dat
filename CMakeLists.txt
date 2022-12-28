@@ -52,7 +52,9 @@ message(STATUS "CMAKE_GENERATOR_PLATFORM: ${CMAKE_GENERATOR_PLATFORM}")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_executable(dat main.cpp)
+add_executable(dat
+    main.cpp
+)
 
 target_link_libraries(dat PUBLIC spdlog argparse nlohmann_json::nlohmann_json)
 

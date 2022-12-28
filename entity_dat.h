@@ -25,5 +25,18 @@ struct entitydat_t
         }
     }
 
+    void print()
+    {
+        std::size_t counter = 0;
+        for (auto entry : entityNames)
+        {
+            if (entry != "")
+            {
+                spdlog::info(fmt::format("{}: {}", counter++, entry));
+            }
+        }
+        spdlog::info(fmt::format(">>> Populated entries: {}", counter));
+    }
+
     std::array<std::string, 1024> entityNames;
 };
