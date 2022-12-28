@@ -23,6 +23,23 @@ CPMAddPackage(
     GIT_TAG 4cacdc4b30da8e9bdc8aefb6dea575b345da8b2b
 ) # defines: argparse
 
+CPMAddPackage(
+    NAME json
+    GITHUB_REPOSITORY nlohmann/json
+    GIT_TAG v3.11.2
+) # defines: nlohmann_json::nlohmann_json
+
+function(set_target_output_directory target)
+    message(STATUS "Setting output directory for ${target} to ${CMAKE_SOURCE_DIR}")
+    set_target_properties(${target} PROPERTIES
+        VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}"
+    )
+endfunction()
+
 message(STATUS "CMAKE_VERSION: ${CMAKE_VERSION}")
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
@@ -37,4 +54,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_executable(dat main.cpp)
 
-target_link_libraries(dat PUBLIC spdlog argparse)
+target_link_libraries(dat PUBLIC spdlog argparse nlohmann_json::nlohmann_json)
+
+set_target_output_directory(dat)

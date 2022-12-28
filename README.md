@@ -18,6 +18,8 @@ cmake --build .
 
 - atom0s [XiEvents](https://github.com/atom0s/XiEvents)
 - RZN [MapViewer](https://git.ashitaxi.com/PrivateServerTools/MapViewer)
+- XenonSmurf [FFXI_DATS](https://github.com/XenonSmurf/FFXI_DATS)
+- Windower Devs [POLUtils](https://github.com/Windower/POLUtils)
 
 ## License
 

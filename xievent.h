@@ -3,6 +3,9 @@
 #include "common.h"
 #include "event_dat.h"
 #include "opcode.h"
+#include "dialog_dat.h"
+#include "entity_dat.h"
+#include "event_dat.h"
 
 #include <array>
 #include <functional>
@@ -88,9 +91,8 @@ public:
     // TODO: Move this to be constexpr somewhere
     std::array<opcode_t, 0xD9> opcodes;
 
-    xievent_t(eventdat_t const& dat)
-    : dat(dat)
-    , ExecPointer(0)
+    xievent_t()
+    : ExecPointer(0)
     , RetFlag(0)
     , RunPos(0)
     {
@@ -1163,7 +1165,8 @@ public:
 
     void ExecProg()
     {
-        for (auto const& block : dat.Blocks)
+        /*
+        for (auto const& block : dats.events.Blocks)
         {
             for (std::size_t idx = 0; idx < block.TagCount; ++idx)
             {
@@ -1204,8 +1207,6 @@ public:
                 spdlog::info("");
             }
         }
+        */
     }
-
-private:
-    eventdat_t const& dat;
 };

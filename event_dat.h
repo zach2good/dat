@@ -31,8 +31,9 @@ struct eventdat_t
     {
         spdlog::info("Loading Event DAT: {}", path.generic_string());
 
-        auto  dat  = load_file<uint8_t>(path.generic_string());
-        auto* data = dat.data();
+        auto  ffPath = util::get_ffxi_install_path();
+        auto  dat    = util::load_file_as<uint8_t>((ffPath / path).generic_string());
+        auto* data   = dat.data();
 
         uint32_t offset = 0;
 
