@@ -3,6 +3,7 @@
 #include "xievent.h"
 
 #include <argparse/argparse.hpp>
+
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -41,7 +42,14 @@ int main(int argc, char* argv[])
     //entities.print();
 
     // eventdat_t  events(data[241][3]);
-    dialogdat_t dialogs(entry[4]);
+
+    dialogdat_t dialogs = dialogdat_t::fromFilepath(entry[4]);
+    auto startingJSON   = dialogs.toJSON();
+    // spdlog::info("Original: {}", startingJSON);
+
+    auto rebuiltDialogs = dialogdat_t::fromJSON(startingJSON);
+    auto rebuiltJSON    = rebuiltDialogs.toJSON();
+    // spdlog::info("Rebuilt: {}", rebuiltJSON);
 
     return 0;
 }

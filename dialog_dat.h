@@ -1,83 +1,155 @@
+// _Heavily_ based on:
+// docs/dialog.hpp
+// Dialog Dat Example
+// (c) 2023 atom0s [atom0s@live.com]
 #pragma once
 
 #include "common.h"
 #include "util.h"
 
 #include <filesystem>
+#include <vector>
 
-struct dialogdat_t
+#include <nlohmann/json.hpp>
+
+class dialogdat_t
 {
-    // Load a Dialog DAT file from a given path and store it in an intermediate representation
-    dialogdat_t(std::filesystem::path path)
-    : path(path)
+public:
+    static dialogdat_t fromFilepath(std::filesystem::path path)
     {
-        spdlog::info("Loading Dialog DAT: {}", path.generic_string());
+        dialogdat_t ddat;
 
-        auto  ffPath = util::get_ffxi_install_path();
-        auto  dat    = util::load_file_as<uint32_t>((ffPath / path).generic_string());
-        auto* data   = dat.data();
+        spdlog::info("Loading Dialog DAT from file: {}", path.generic_string());
 
-        // https://github.com/Windower/POLUtils/blob/master/PlayOnline.FFXI/FileTypes/DialogTable.cs
+        auto ffPath = util::get_ffxi_install_path();
+        ddat.data_  = util::load_file_as<uint8_t>((ffPath / path).generic_string());
 
-        uint32_t size = data[0];
-        spdlog::info(fmt::format("size: {}", size));
-        if (size != 0x10000000 + dat.size() - 4)
+        spdlog::info("Size: {}", ddat.data_.size());
+        spdlog::info("First 20 bytes (encrypted): {}", spdlog::fmt_lib::join(ddat.data_.begin(), ddat.data_.begin() + 20, ", "));
+
+        // Check if the file data is encrypted..
+        if (ddat.data_.data()[3] == 0x10)
         {
-            spdlog::info("Invalid size");
-            return;
+            // Decrypt the file data; skipping the header..
+            for (auto x = 4u; x < ddat.data_.size(); x++)
+            {
+                ddat.data_.data()[x] ^= 0x80;
+            }
         }
 
-        // Decrypt
-        // TODO: Is this size right?
-        for (std::size_t idx = 1; idx < dat.size() - 4; ++idx)
-        {
-            dat[idx] ^= 0x80808080;
-        }
+        spdlog::info("First 20 bytes (decrypted): {}", spdlog::fmt_lib::join(ddat.data_.begin(), ddat.data_.begin() + 20, ", "));
+        spdlog::info("First Entry: {}", ddat.get(0));
 
-        uint32_t startPos = data[1];
-        spdlog::info(fmt::format("startPos: {}", startPos));
-        if (startPos % 4 != 0)
-        {
-            spdlog::info("Invalid startPos");
-            return;
-        }
-
-        uint32_t entryCount = startPos / 4;
-        spdlog::info(fmt::format("entryCount: {}", entryCount));
-
-        std::vector<uint32_t> entries;
-
-        for (uint32_t idx = 1; idx < entryCount; ++idx)
-        {
-            entries.emplace_back(data[idx]);
-        }
-
-        // Add end marker
-        entries.emplace_back((uint32_t)dat.size() - 4);
-
-        std::sort(entries.begin(), entries.end());
-
-        for (std::size_t idx = 0; idx < entries.size() - 1; ++idx)
-        {
-            auto start = entries[idx];
-            auto end   = entries[idx + 1];
-            auto len   = end - start;
-
-            spdlog::info(fmt::format("{} ({})", std::string(data + start, data + end), len));
-        }
+        return ddat;
     }
 
-    // TODO: Take the parsed intermediate representation and dump it as a DAT to the original filepath
-    void toDAT()
+    static dialogdat_t fromJSON(std::string jsonStr)
     {
+        dialogdat_t ddat;
+
+        using json  = nlohmann::json;
+        auto inJSON = json::parse(jsonStr);
+
+        std::vector<std::string> data = inJSON["data"];
+
+        // Determine size to write out to header from data
+        // Reverse of:
+        // (*reinterpret_cast<const uint32_t*>(this->data_.data() + 0x04) - 4) >> 2;
+        uint32_t numEntries = data.size();
+        uint32_t rawSize = (numEntries << 4) + 1; // TODO
+
+        ddat.data_.resize(rawSize);
+
+        // Write header back
+        *reinterpret_cast<uint32_t*>(ddat.data_.data()) = rawSize;
+
+        spdlog::info("Size: {}", ddat.data_.size());
+        spdlog::info("First 20 bytes (encrypted): {}", spdlog::fmt_lib::join(ddat.data_.begin(), ddat.data_.begin() + 20, ", "));
+        spdlog::info("First 20 bytes (decrypted): {}", spdlog::fmt_lib::join(ddat.data_.begin(), ddat.data_.begin() + 20, ", "));
+        spdlog::info("Reconstructed First Entry: {}", ddat.get(0));
+
+        return ddat;
     }
 
-    // TODO: Take the parsed intermediate representation and dump it as a JSON to the original filepath
-    void toJSON()
+    static dialogdat_t fromDATData(std::vector<uint8_t> datVec)
     {
+        dialogdat_t ddat;
+
+        // TODO
+
+        return ddat;
     }
 
-    std::filesystem::path path;
+    /**
+     * Returns the total number of strings available within the loaded dialog.
+     *
+     * @return {uint32_t} The number of strings available.
+     */
+    auto size(void) const -> uint32_t
+    {
+        if (this->data_.size() == 0)
+        {
+            spdlog::error("Unpopulated size requested");
+            return 0;
+        }
 
-    // TODO: Store intermediate representation of dialogs, probably a map or something
+        return (*reinterpret_cast<const uint32_t*>(this->data_.data() + 0x04) - 4) >> 2;
+    }
+
+    /**
+     * Returns the pointer to a string within the dialog from its index.
+     *
+     * @param {uint16_t} idx - The index of the string to return.
+     * @return {const char*} The pointer to the string if valid, nullptr otherwise.
+     */
+    auto get(const uint16_t idx) const -> const char*
+    {
+        if (this->size() < idx)
+        {
+            spdlog::error("Invalid index requested: {}", idx);
+            return nullptr;
+        }
+
+        // Read the offset to the string..
+        const auto ptr = this->data_.data();
+        const auto off = *reinterpret_cast<const uint32_t*>(ptr + 0x04 * idx + 4);
+
+        // Return the string..
+        return reinterpret_cast<const char*>(ptr + 0x04 + off);
+    }
+
+    std::vector<std::string> toStringVector()
+    {
+        std::vector<std::string> outVec;
+
+        auto numEntries = this->size();
+        outVec.reserve(numEntries);
+        for (std::size_t idx = 0; idx < numEntries; ++idx)
+        {
+            outVec.emplace_back(this->get(idx));
+        }
+        return outVec;
+    }
+
+    std::vector<uint8_t> toDAT()
+    {
+        // TODO:
+    }
+
+    std::string toJSON()
+    {
+        using json = nlohmann::json;
+        json outJSON;
+        for (std::size_t idx = 0; idx < this->size(); ++idx)
+        {
+            outJSON["data"][idx] = this->get(idx);
+        }
+        // Splat into utf-8 since the JSON doesn't like it
+        return outJSON.dump(4, ' ', true, json::error_handler_t::replace);
+    }
+
+private:
+    dialogdat_t() = default;
+
+    std::vector<uint8_t> data_;
 };
