@@ -52,17 +52,17 @@ int main(int argc, char* argv[])
         }
     }
 
-    auto entry = data[ZONES::WINDURST_WOODS];
-    std::string name = entry[1];
+    auto        entry = data[ZONES::WINDURST_WOODS];
+    std::string name  = entry[1];
     spdlog::info("Loading: {}", name);
 
     entitydat_t entities(entry[2]);
-    //entities.print();
+    // entities.print();
 
     // eventdat_t events(data[241][3]);
 
-    dialogdat_t dialogs = dialogdat_t::fromFilepath(entry[4]);
-    auto startingJSON   = dialogs.toJSON();
+    dialogdat_t dialogs      = dialogdat_t::fromFilepath(entry[4]);
+    auto        startingJSON = dialogs.toJSON();
     // spdlog::info("Original: {}", startingJSON);
 
     auto rebuiltDialogs = dialogdat_t::fromJSON(startingJSON);

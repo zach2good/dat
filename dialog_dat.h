@@ -14,8 +14,7 @@
 
 class dialogdat_t
 {
-// Constructor factories
-public:
+public: // Constructor factories
     static dialogdat_t fromFilepath(std::filesystem::path path)
     {
         spdlog::info("=== dialogdat_t::fromFilepath ===");
@@ -96,8 +95,7 @@ public:
         return ddat;
     }
 
-// Methods
-public:
+public: // Methods
     /**
      * Returns the total number of strings available within the loaded dialog.
      *
