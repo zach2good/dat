@@ -55,17 +55,18 @@ public: // Constructor factories
 
         std::unordered_map<uint32_t, std::string> stringData = inJSON["data"];
 
-        // Determine size to write out to header from data
-        // TODO: Write out header bytes
-
         // Write out size information
         uint32_t rawSize = stringData.size(); // 60704: correct
         spdlog::info("rawSize: {}", rawSize);
         ddat.data_.resize(rawSize);
         ddat.setSize(rawSize);
 
-        // Write back encrypt flag
-        ddat.data_.data()[3] |= inJSON["encrypt"] ? 0x10 : 0x00;
+        // Write back header
+        std::vector<uint8_t> header = inJSON["header"];
+        ddat.data_.data()[0] = header[0];
+        ddat.data_.data()[1] = header[1];
+        ddat.data_.data()[2] = header[2];
+        ddat.data_.data()[3] = header[3];
 
         spdlog::info("numEntries: {}, encrypt: {}", stringData.size(), ddat.data_.data()[3] == 0x10);
 
@@ -81,7 +82,7 @@ public: // Constructor factories
         // No need to decrypt, this has come from unencrypted JSON
 
         spdlog::info("First 40 bytes: {}", spdlog::fmt_lib::join(ddat.data_.begin(), ddat.data_.begin() + 40, ", "));
-        spdlog::info("Reconstructed First Entry: {}", std::string(ddat.getString(0)));
+        // spdlog::info("Reconstructed First Entry: {}", std::string(ddat.getString(0)));
 
         return ddat;
     }
@@ -149,7 +150,7 @@ public: // Methods
     {
         // Read the offset to the string..
         const auto ptr = this->data_.data();
-        const auto off = idx + 4;
+        const auto off = 0x04 * idx + 4;
         std::memcpy(ptr + 0x04 + off, str.data(), str.size());
     }
 
@@ -188,7 +189,13 @@ public: // Methods
         outJSON["data"] = outMap;
 
         // This data is not trackable with the data strings, so write as its own member
-        outJSON["encrypt"] = this->data_.data()[3] == 0x10;
+        outJSON["header"] =
+        {
+            this->data_.data()[0],
+            this->data_.data()[1],
+            this->data_.data()[2],
+            this->data_.data()[3]
+        };
 
         // Splat into utf-8 since the JSON doesn't like it
         // TODO: This seems lossy, find a better way to write the extended chars into JSON
