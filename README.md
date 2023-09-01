@@ -8,9 +8,8 @@ A tool to inspect and dump FFXI DAT files.
 
 ```ps
 mkdir build
-cd build
-cmake ..
-cmake --build .
+cmake -S . -B build
+cmake --build build
 .\Debug\dat.exe
 ```
 
