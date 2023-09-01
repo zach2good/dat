@@ -40,7 +40,7 @@ public: // Constructor factories
 
         spdlog::info("First 40 bytes (decrypted): {}", spdlog::fmt_lib::join(ddat.data_.begin(), ddat.data_.begin() + 40, ", "));
         spdlog::info("ddat.size(): {}", ddat.getSize());
-        spdlog::info("First Entry: {}", ddat.getString(0));
+        spdlog::info("First Entry: {} ({})", ddat.getString(0), ddat.getString(0).size());
 
         return ddat;
     }
@@ -56,10 +56,18 @@ public: // Constructor factories
         std::unordered_map<uint32_t, std::string> stringData = inJSON["data"];
 
         // Write out size information
-        uint32_t rawSize = stringData.size(); // 60704: correct
+        uint32_t headerSize      = 0x04;
+        uint32_t offsetTableSize = stringData.size() * 4; // A uint32_t per offset
+        uint32_t stringDataSize  = std::accumulate(stringData.begin(), stringData.end(), 0, [](auto sum, auto const& elemPair) {
+            return sum + elemPair.second.size();
+        });
+        uint32_t rawSize = headerSize + offsetTableSize + stringDataSize;
+
         spdlog::info("rawSize: {}", rawSize);
         ddat.data_.resize(rawSize);
         ddat.setSize(rawSize);
+
+        spdlog::info("stringData[0]: {} ({})", stringData[0], stringData[0].size());
 
         // Write back header
         std::vector<uint8_t> header = inJSON["header"];
@@ -69,6 +77,18 @@ public: // Constructor factories
         ddat.data_.data()[3] = header[3];
 
         spdlog::info("numEntries: {}, encrypt: {}", stringData.size(), ddat.data_.data()[3] == 0x10);
+
+        // Rebuild offset table
+        {
+            std::size_t startOfStrings = 0 + 0x04 * stringData.size() + 4;
+
+            std::size_t counter = 0;
+            for (auto const& [_, str] : stringData)
+            {
+                *reinterpret_cast<uint32_t*>(ddat.data_.data() + 0x04 * counter + 4) = (startOfStrings - 4) >> 2;
+                counter += 1;
+            }
+        }
 
         // Write strings back
         ddat.setString(0, stringData[0]);
@@ -82,7 +102,7 @@ public: // Constructor factories
         // No need to decrypt, this has come from unencrypted JSON
 
         spdlog::info("First 40 bytes: {}", spdlog::fmt_lib::join(ddat.data_.begin(), ddat.data_.begin() + 40, ", "));
-        // spdlog::info("Reconstructed First Entry: {}", std::string(ddat.getString(0)));
+        spdlog::info("Reconstructed First Entry: {} ({})", ddat.getString(0), ddat.getString(0).size());
 
         return ddat;
     }
@@ -106,7 +126,7 @@ public: // Methods
     {
         if (this->data_.size() == 0)
         {
-            spdlog::error("Invalid size");
+            spdlog::error("getSize: Invalid size");
             return 0;
         }
 
@@ -117,7 +137,7 @@ public: // Methods
     {
         if (this->data_.size() == 0)
         {
-            spdlog::error("Invalid size");
+            spdlog::error("setSize: Invalid size");
             return;
         }
 
@@ -130,24 +150,30 @@ public: // Methods
      * @param {uint16_t} idx - The index of the string to return.
      * @return {const char*} The pointer to the string if valid, nullptr otherwise.
      */
-    auto getString(const uint16_t idx) const -> const char*
+    auto getString(const uint16_t idx) const -> std::string
     {
         if (this->getSize() < idx)
         {
-            spdlog::error("Invalid index requested: {}", idx);
-            return nullptr;
+            spdlog::error("getString: Invalid index requested: {}", idx);
+            return "";
         }
 
-        // Read the offset to the string..
+        // Read the offset to the string, from the offset table..
         const auto ptr = this->data_.data();
         const auto off = *reinterpret_cast<const uint32_t*>(ptr + 0x04 * idx + 4);
 
-        // Return the string..
-        return reinterpret_cast<const char*>(ptr + 0x04 + off);
+        // Read the string from the dat, and return it..
+        return std::string(reinterpret_cast<const char*>(ptr + 0x04 + off));
     }
 
     void setString(const uint16_t idx, std::string const& str)
     {
+        if (this->getSize() < idx)
+        {
+            spdlog::error("setString: Invalid index requested: {}", idx);
+            return;
+        }
+
         // Read the offset to the string..
         const auto ptr = this->data_.data();
         const auto off = 0x04 * idx + 4;
