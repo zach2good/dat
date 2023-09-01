@@ -9,6 +9,7 @@ struct entitydat_t
 {
     entitydat_t(std::filesystem::path path)
     {
+        spdlog::info("=== entitydat_t ===");
         spdlog::info("Loading Entity DAT: {}", path.generic_string());
 
         auto  ffPath = util::get_ffxi_install_path();
@@ -22,6 +23,13 @@ struct entitydat_t
             entityNames[index] = name;
             ++index;
             offset += 32;
+        }
+
+        // Debug print
+        spdlog::info("numEntities: {}", index);
+        for (std::size_t idx = 0; idx < 5; ++idx)
+        {
+            spdlog::info("{}: {}", idx, entityNames[idx]);
         }
     }
 
