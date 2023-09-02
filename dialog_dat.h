@@ -2,6 +2,16 @@
 // docs/dialog.hpp
 // Dialog Dat Example
 // (c) 2023 atom0s [atom0s@live.com]
+/*
+Structure from atom0s:
+struct header_t
+{
+    uint8_t     junk[3];
+    uint8_t     encoded;
+    uint32_t    count;
+    uint32_t    offsets[(count - 4) >> 2];
+};
+*/
 #pragma once
 
 #include "common.h"
@@ -91,13 +101,10 @@ public: // Constructor factories
         }
 
         // Write strings back
-        ddat.setString(0, stringData[0]);
-
-        // std::size_t counter = 0;
-        // for (auto const& str : data)
-        // {
-        //     ddat.set(counter++, str);
-        // }
+        for (auto const& [idx, str] : stringData)
+        {
+            ddat.setString(idx, str);
+        }
 
         // No need to decrypt, this has come from unencrypted JSON
 
